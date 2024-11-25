@@ -55,6 +55,7 @@ export default function DashProfile() {
     const fileName = new Date().getTime() + imageFile.name;
     const storageRef = ref(storage, fileName);
     const uploadTask = uploadBytesResumable(storageRef, imageFile);
+    setImageFileUploading(true);
     uploadTask.on(
       "state_changed",
       (snapshot) => {
@@ -76,6 +77,9 @@ export default function DashProfile() {
           setImageFileURL(downloadURL);
           setFormData({ ...formData, profilePicture: downloadURL });
           setImageFileUploading(false);
+          setTimeout(() => {
+            setImageFileUploadProgress(null);
+          }, 500);
         });
       }
     );
@@ -165,7 +169,7 @@ export default function DashProfile() {
           className="relative w-32 h-32 self-center cursor-pointer shadow-md overflow-hidden rounded-full"
           onClick={() => filePickerRef.current.click()}
         >
-          {imageFileUploadingProgress && (
+          {imageFileUploadingProgress !== null && (
             <CircularProgressbar
               value={imageFileUploadingProgress || 0}
               text={`${imageFileUploadingProgress}%`}
