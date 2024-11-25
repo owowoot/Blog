@@ -122,14 +122,14 @@ export default function DashProfile() {
     setShowModal(false);
     try {
       dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete${currentUser._id}`, {
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (!res.ok) {
         dispatch(deleteUserFailure(data.message));
       } else {
-        dispatch(deleteUserSuccess(error.message));
+        dispatch(deleteUserSuccess(data));
       }
     } catch (error) {
       dispatch(deleteUserFailure(error.message));
@@ -226,12 +226,7 @@ export default function DashProfile() {
         </Button>
       </form>
       <div className="text-red-500 flex justify-between mt-5">
-        <span
-          onClick={() => {
-            showModal(true);
-          }}
-          className="cursor-pointer"
-        >
+        <span onClick={() => setShowModal(true)} className="cursor-pointer">
           Delete Account
         </span>
         <span onClick={handleSignout} className="cursor-pointer">
@@ -266,7 +261,7 @@ export default function DashProfile() {
               Are you sure you want to delete your account?
             </h3>
             <div className="flex justify-center gap-4 ">
-              <Button color="failure" onClick={() => handleDeleteUser}>
+              <Button color="failure" onClick={handleDeleteUser}>
                 Yes, I'm sure
               </Button>
               <Button color="gray" onClick={() => setShowModal(false)}>
