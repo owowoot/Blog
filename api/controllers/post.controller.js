@@ -1,7 +1,7 @@
 import Post from "../models/post.model.js";
 import { errorHandler } from "../utils/error.js";
 
-const MAX_POST_PER_PAGE = 9;
+export const MAX_POST_PER_PAGE = 9;
 export const create = async (req, res, next) => {
   if (!req.user.isAdmin) {
     return next(errorHandler(403, "You are not allowed to create a post"));
