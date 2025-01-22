@@ -3,13 +3,22 @@ import { useEffect, useState } from "react";
 import { FaThumbsUp } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { Button, Textarea } from "flowbite-react";
-import { set } from "mongoose";
 
-export default function Comment({ comment, onLike, onEdit, onDelete }) {
+export default function Comment({
+  comment,
+  onLike,
+  onEdit,
+  onDelete,
+  onAddReply,
+  renderReplies,
+}) {
   const [user, setUser] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
   const { currentUser } = useSelector((state) => state.user);
+  const [showReplyBox, setShowReplyBox] = useState(false);
+  const [replyContent, setReplyContent] = useState("");
+
   useEffect(() => {
     const getUser = async () => {
       try {
@@ -24,10 +33,12 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
     };
     getUser();
   }, [comment]);
+
   const handleEdit = () => {
     setIsEditing(true);
     setEditedContent(comment.content);
   };
+
   const handleSave = async () => {
     try {
       const res = await fetch(`/api/comment/editComment/${comment._id}`, {
@@ -47,6 +58,33 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
       console.log(error.message);
     }
   };
+
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/comment/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content: replyContent,
+          postId: comment.postId,
+          userId: currentUser._id,
+          parentId: comment._id,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReplyContent("");
+        setShowReplyBox(false);
+        onAddReply(data);
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
   return (
     <div className="flex p-4 border-b dark:border-gray-600 text-sm">
       <div className="flex-shrink-0 mr-3">
@@ -64,26 +102,6 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
           <span className="text-gray-500 text-xs">
             {moment(comment.createdAt).fromNow()}
           </span>
-        </div>
-        <p className="text-gray-500 pb-2">{comment.content}</p>
-        <div className="flex items-center pt-2 text-xs border-t dark:border-gray-700 max-w-fit gap-2">
-          <button
-            type="button"
-            onClick={() => onLike(comment._id)}
-            className={`text-gray-400 hover:text-blue-500 ${
-              currentUser &&
-              comment.likes.includes(currentUser._id) &&
-              "!text-blue-500"
-            }`}
-          >
-            <FaThumbsUp className="text-sm" />
-          </button>
-          <p className="text-gray-400">
-            {comment.numberOfLikes > 0 &&
-              comment.numberOfLikes +
-                " " +
-                (comment.numberOfLikes === 1 ? "like" : "likes")}
-          </p>
         </div>
         {isEditing ? (
           <>
@@ -152,9 +170,36 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
                     </button>
                   </>
                 )}
+              <button
+                type="button"
+                onClick={() => setShowReplyBox(!showReplyBox)}
+                className="text-gray-400 hover:text-blue-500"
+              >
+                Reply
+              </button>
             </div>
           </>
         )}
+        {showReplyBox && currentUser && (
+          <form onSubmit={handleReplySubmit} className="mt-4 ml-10">
+            <Textarea
+              placeholder="Add a reply..."
+              rows="2"
+              maxLength="200"
+              onChange={(e) => setReplyContent(e.target.value)}
+              value={replyContent}
+            />
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-gray-500 text-xs">
+                {200 - replyContent.length} characters remaining
+              </p>
+              <Button outline gradientDuoTone="purpleToBlue" type="submit">
+                Reply
+              </Button>
+            </div>
+          </form>
+        )}
+        {renderReplies()}
       </div>
     </div>
   );

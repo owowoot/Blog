@@ -1,4 +1,4 @@
-import { Alert, Button, Modal, TextInput, Textarea } from "flowbite-react";
+import { Alert, Button, Modal, Textarea } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,7 +12,9 @@ export default function CommentSection({ postId }) {
   const [comments, setComments] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (comment.length > 200) {
@@ -28,6 +30,7 @@ export default function CommentSection({ postId }) {
           content: comment,
           postId,
           userId: currentUser._id,
+          parentId: replyTo,
         }),
       });
       const data = await res.json();
@@ -35,6 +38,7 @@ export default function CommentSection({ postId }) {
         setComment("");
         setCommentError(null);
         setComments([data, ...comments]);
+        setReplyTo(null);
       }
     } catch (error) {
       setCommentError(error.message);
@@ -55,6 +59,7 @@ export default function CommentSection({ postId }) {
     };
     getComments();
   }, [postId]);
+
   const handleLike = async (commentId) => {
     try {
       if (!currentUser) {
@@ -82,6 +87,7 @@ export default function CommentSection({ postId }) {
       console.log(error.message);
     }
   };
+
   const handleEdit = async (comment, editedContent) => {
     setComments(
       comments.map((c) =>
@@ -89,6 +95,7 @@ export default function CommentSection({ postId }) {
       )
     );
   };
+
   const handleDelete = async (commentId) => {
     setShowModal(false);
     try {
@@ -107,6 +114,32 @@ export default function CommentSection({ postId }) {
       console.log(error.message);
     }
   };
+
+  const handleReply = (commentId) => {
+    setReplyTo(commentId);
+  };
+
+  const handleAddReply = (reply) => {
+    setComments((prevComments) => [...prevComments, reply]);
+  };
+
+  const renderComments = (comments, parentId = null) => {
+    return comments
+      .filter((comment) => comment.parentId === parentId)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .map((comment) => (
+        <Comment
+          key={comment._id}
+          comment={comment}
+          onLike={handleLike}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAddReply={handleAddReply}
+          renderReplies={() => renderComments(comments, comment._id)}
+        />
+      ));
+  };
+
   return (
     <div className="max-w-2xl mx-auto w-full p-3">
       {currentUser ? (
@@ -169,17 +202,7 @@ export default function CommentSection({ postId }) {
               <p>{comments.length}</p>
             </div>
           </div>
-          {comments.map((comment) => (
-            <Comment
-              key={comment._id}
-              comment={comment}
-              onLike={handleLike}
-              onDelete={(commentId) => {
-                setShowModal(true);
-                setCommentToDelete(commentId);
-              }}
-            />
-          ))}
+          {renderComments(comments)}
         </>
       )}
       <Modal

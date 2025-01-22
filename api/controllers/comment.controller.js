@@ -4,7 +4,7 @@ import { errorHandler } from "../utils/error.js";
 const MAX_CONTENT_LIMIT = 9;
 export const createComment = async (req, res, next) => {
   try {
-    const { content, postId, userId } = req.body;
+    const { content, postId, userId, parentId } = req.body;
     if (userId !== req.user.id) {
       return next(
         errorHandler(403, "You are not allowed to create this comment")
@@ -14,6 +14,7 @@ export const createComment = async (req, res, next) => {
       content,
       postId,
       userId,
+      parentId,
     });
     await newComment.save();
     res.status(200).json(newComment);
