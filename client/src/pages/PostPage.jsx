@@ -5,7 +5,7 @@ import CommentSection from "../components/CommentSection";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
 import PostCard from "../components/PostCard";
-// import CallToAction from "../components/CallToAction";
+import CallToAction from "../components/CallToAction";
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -90,7 +90,7 @@ export default function PostPage() {
       <div className="p-3 max-w-2xl mx-auto w-full post-content">
         {parsedContent}
       </div>
-      <div className="max-w-4xl mx-auto w-full">{/* <CallToAction /> */}</div>
+
       <div>
         <CommentSection postId={post._id} />
       </div>
@@ -100,6 +100,9 @@ export default function PostPage() {
           {recentPosts &&
             recentPosts.map((post) => <PostCard key={post._id} post={post} />)}
         </div>
+      </div>
+      <div className="max-w-4xl mx-auto w-full">
+        <CallToAction />
       </div>
     </main>
   ) : (
